@@ -1,0 +1,29 @@
+.dat format:
+
+Header {
+	magic (ASCII): VCCD
+	version (int): 1
+	numblocks (int): number of blocks
+	blocksize (int): 8192
+	directorysize (int): number of entries in directory (number of lines)
+	offset (int): location of the first block, blocks must start at 512 * x offset
+}
+
+Directory {
+	Dir_entry {
+		crc32hash (Uint): a crc32 checksum of the sound name
+		block_number (Uint): number of the block it sits in
+		block_offset (Unsigned short): offset where this line starts in the block
+		string_length (Unsigned short): Length of the string
+	}
+
+	Dir_entry { 
+		...
+	}
+}
+
+Block { // Contains utf-16le encoded strings
+	string ...
+	string ...
+	...
+}
