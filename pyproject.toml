@@ -1,0 +1,35 @@
+[build-system]
+requires = [
+	"setuptools >= 68.1.0",
+    "git+https://github.com/Project-Collapse-Studios/srctools.git"
+	]
+
+[project]
+name = "PyCaptionCompiler"
+requires-python = ">=3.8"
+version = "1.3"
+urls = {source="https://github.com/TheEnderek0/PySteamPathProvider/"}
+description = "Caption compiler library for Source Engine games, re-written in Python."
+readme = "README.md"
+keywords = ["Steam", "Valve", "Source Engine"]
+authors = [
+	{name="Enderek"}
+]
+license = {text = "MIT"}
+classifiers = [
+	"Development Status :: 5 - Production/Stable",
+	"License :: OSI Approved :: MIT License",
+	"Programming Language :: Python :: 3 :: Only",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Software Development :: Libraries",
+	"Topic :: Games/Entertainment"
+]
+dependencies=[
+	"git+https://github.com/Project-Collapse-Studios/srctools.git"
+]
+
+
+[tool.setuptools.packages.find]
+	where = ["src"]
+	include = ["PyCaptionCompiler*"]
