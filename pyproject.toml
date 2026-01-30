@@ -1,7 +1,7 @@
 [build-system]
 requires = [
 	"setuptools >= 68.1.0",
-    "git+https://github.com/Project-Collapse-Studios/srctools.git"
+    "srctools @ git+https://github.com/Project-Collapse-Studios/srctools.git"
 	]
 
 [project]
@@ -26,7 +26,7 @@ classifiers = [
 	"Topic :: Games/Entertainment"
 ]
 dependencies=[
-	"git+https://github.com/Project-Collapse-Studios/srctools.git"
+	"srctools @ git+https://github.com/Project-Collapse-Studios/srctools.git"
 ]
 
 
