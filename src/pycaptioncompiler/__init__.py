@@ -1,1 +1,1 @@
-from compiler import Subtitles
+from pycaptioncompiler.compiler import Subtitles
