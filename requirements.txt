@@ -1,2 +1,3 @@
 git+https://github.com/Project-Collapse-Studios/srctools.git
+git+https://github.com/Project-Collapse-Studios/PCSLogger.git
 charset_normalizer >= 3.4.4
