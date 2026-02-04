@@ -5,10 +5,10 @@ from pathlib import Path
 from io import StringIO
 from charset_normalizer import from_path
 from struct import pack
-from logging import getLogger
+from pcslogger import Logger
 from binascii import crc32
 
-M_LOGGER = getLogger("[Main]")
+M_LOGGER = Logger.RegisterModule("PyCaptionCompiler")
 
 # Constants
 MAGIC_KEYWORD = b"VCCD"
@@ -21,6 +21,9 @@ def GetLineSized(crc_len: dict[int, int], size: int) -> tuple[int | None, int]:
     max_size = 0
     chash = None
     for crchash in crc_len.keys():
+        if crc_len[crchash] > size:
+            continue # Skip elements that have bigger size than the one we want
+
         if crc_len[crchash] > max_size:
             max_size = crc_len[crchash]
             chash = crchash
@@ -53,8 +56,8 @@ class BlockData:
 
 class Subtitles:
     def __init__(self, kv_file: Keyvalues):
-
-        self.logger = getLogger("[Subtitles]")
+        
+        self.logger = M_LOGGER
 
         kv_file = kv_file.find_key("lang")
         self.lang = kv_file["Language"]
@@ -64,22 +67,30 @@ class Subtitles:
             self.lines[cc_line.real_name] = cc_line.value
 
     def _createblocks(self) -> list[BlockData]:
-
+        self.logger.Info("Creating blocks...")
         crc_line: dict[int, bytes] = {} # Hash: line
         crc_strlen = {} # Hash: line length (used for packing)
         
+        self.logger.VInfo("==Begin name-hash-len table:")
         for name, line in self.lines.items():
-            name = crc32(name.lower().encode()) # Source uses 0xFFFFFFFF, no need to do bitwise and
+            name_ = crc32(name.lower().encode()) # Source uses 0xFFFFFFFF, no need to do bitwise and
             line = line.encode("utf-16le") + pack('h', 0)
 
-            crc_line[name] = line
-            crc_strlen[name] = len(line)
+            crc_line[name_] = line
+            linelen = len(line)
+            crc_strlen[name_] = linelen
+
+            self.logger.VInfo(f"{name} | {name_} | {linelen}")
+
+        self.logger.VInfo("==End==")
+        self.logger.Info(f"Total entry count: {len(crc_line.keys())}")
     
         # Pack into blocks
 
         blocks: list[BlockData] = []
+        block_id = 0 # Only used for logging
 
-        while len(crc_strlen):
+        while crc_strlen.keys():
             
             # Fill block by block, try to pack as many lines as you can, starting with the largest one left
             block = BlockData()
@@ -95,6 +106,10 @@ class Subtitles:
                 remaining_size -= size
             
             blocks.append(block)
+            self.logger.VInfo(f"Block {block_id} | Size: {BLOCK_SIZE - remaining_size} | Packing efficiency: {((BLOCK_SIZE - remaining_size) / BLOCK_SIZE * 100):.2f}%")
+            block_id += 1
+
+        self.logger.Info(f"Total block count: {len(blocks)}")
 
         return blocks
 
@@ -113,7 +128,7 @@ class Subtitles:
     	    	...
     	    }
         }"""
-
+        self.logger.Info("Creating dictionary header...")
         directory = bytearray()
 
         for i in range(len(blocks)):
@@ -129,7 +144,7 @@ class Subtitles:
     
     def serialize(self) -> bytes:
         """Serialize to a .dat file format."""
-        self.logger.info("Begin serializing...")
+        self.logger.Info("Begin serializing...")
         file = bytearray()
 
         blocks = self._createblocks()
@@ -170,6 +185,8 @@ class Subtitles:
             file += block.block
 
 
+        self.logger.Info("File successfully serialized!")
+
         return file
 
 
@@ -191,8 +208,10 @@ class Subtitles:
         matches = from_path(str_or_bytes_path)
         encoding = matches.best().encoding
 
+        M_LOGGER.VInfo(f"Detected encoding: {encoding}")
+
         if encoding not in ("utf-16", "utf_16"):
-            M_LOGGER.warning(f"File {str_or_bytes_path}, detected encoding: {encoding}, UTF-16LE is recommended!")
+            M_LOGGER.Warning(f"File {str_or_bytes_path}, detected encoding: {encoding}, UTF-16LE is recommended!")
 
         with open(str_or_bytes_path, "r", encoding = encoding) as file:
             Subtitles_ = Subtitles.from_file(file)
